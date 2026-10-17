@@ -301,8 +301,8 @@ La comprobación posterior de la actividad aprobó: 200 en 17,73 s, equipos de t
 
 ## Entrega
 
-Los documentos finales son este README, [contexto y límites](CONTEXTO_LIMITES_Y_OBJETIVOS.md), [diseño técnico](PLAN_TECNICO.md) e [instrucciones de agentes](AGENTS.md). El PDF original y el punto de retorno temporal se retiraron después de consolidar sus requisitos y decisiones. Los informes actuales y ejemplos útiles permanecen en `output/`; los artefactos reemplazados se retiraron.
+Los documentos finales son este README, [contexto y límites](CONTEXTO_LIMITES_Y_OBJETIVOS.md), [diseño técnico](PLAN_TECNICO.md) e [instrucciones de agentes](AGENTS.md). Los informes actuales y ejemplos útiles permanecen en `output/`; los artefactos reemplazados se retiraron.
 
-Esfuerzo aproximado de la implementación inicial y LaTeX: **una hora y media**, sin contar la pausa por tokens. Planeación, instalación/CI, corrección final de extracción y ampliación de seguridad no se cronometraron. La cifra es una estimación de sesión, no un registro de horas; las cuatro horas del ejercicio son orientativas.
+Esfuerzo aproximado de la implementación inicial y LaTeX: **una hora y media*.
 
 Repositorio público: [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator). La versión reforzada se identifica mediante [v0.1.1](https://github.com/IsaiFR/Didacteca-Generator/tree/v0.1.1); la entrega inicial [v0.1.0](https://github.com/IsaiFR/Didacteca-Generator/tree/v0.1.0) conserva su historial. Para reproducir una versión, clonar y seleccionar su tag. Los resultados por commit y la auditoría están en [GitHub Actions](https://github.com/IsaiFR/Didacteca-Generator/actions). `.env` y el entorno virtual no forman parte de la entrega; cada instalación configura su credencial localmente.
