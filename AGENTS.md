@@ -53,7 +53,7 @@ Usar el director y los implementadores necesarios dentro del límite de concurre
 - La clave temporal la proporciona Didacteca; no pedir una personal como sustituto. Si falta, usar dobles y declarar pendiente la comprobación real.
 - Ejecutar pruebas apropiadas tras cambios. Comando: `python -m pytest -q`. Instalación limpia: `python scripts/check_install.py`. Ambos deben funcionar sin OpenAI. En este entorno puede requerirse ejecución autorizada fuera del aislamiento para el bucle local de TestClient.
 - Para integración real, usar los comandos explícitos del README. Ante acceso o cuota agotada, parar reintentos. No confundir mocks con integración completa ni una respuesta JSON válida con exactitud educativa.
-- Windows está comprobado; el workflow de Ubuntu 24.04 está preparado y su ejecución pendiente. No afirmar pruebas Linux basándose en resolución cruzada de paquetes.
+- Windows está comprobado localmente; Ubuntu 24.04/Python 3.12.15 aprobó instalación, dependencias, 122 pruebas y contrato HTTP en GitHub Actions. El README enlaza la evidencia. Distinguir ejecución en un runner Linux de una resolución cruzada de paquetes o de pruebas físicas en este equipo.
 - Mantener documentación consistente con cambios, ejemplos y resultados. No añadir reportes redundantes ni conservar planes obsoletos como instrucciones vigentes. Explicar límites y esfuerzo sin inventar tiempos.
 
 ## Pendientes de entrega

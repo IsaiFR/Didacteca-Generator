@@ -77,7 +77,7 @@ Las expresiones matemáticas generadas usan LaTeX con `\(...\)` o `\[...\]` dent
 
 No se incluyen frontend, autenticación, persistencia, despliegue, RAG propio, embeddings, bases vectoriales ni frameworks de agentes. Los libros de nivel similar quedaron fuera para respetar la fuente única. Swagger permite probar la API, pero no renderiza fórmulas.
 
-La instalación está comprobada en Windows/Python 3.12. Hay instrucciones y CI para Ubuntu 24.04; su ejecución sigue pendiente. La muestra educativa es pequeña, sin calibración con estudiantes ni garantía general frente a inyecciones.
+La instalación limpia está comprobada en Windows/Python 3.12.14 y Ubuntu 24.04/Python 3.12.15. Ubuntu ejecutó las 122 pruebas, comprobación de dependencias y contrato HTTP mediante GitHub Actions; la evidencia está enlazada en el README. La muestra educativa es pequeña, sin calibración con estudiantes ni garantía general frente a inyecciones.
 
 La ampliación coloquial sigue pendiente: en los ejemplos acordados, «normales» corresponde a intermedia y «tranquilas» a fácil; «formales» requiere aclarar dificultad. No se atribuye a la versión actual una evaluación de esas frases.
 

@@ -80,6 +80,6 @@ Los registros operativos contienen identificador, acción, código, duración, l
 
 `tests/` comprueba contratos, aclaraciones, proveedores, reparación, concurrencia, referencias, rúbrica y matemáticas con dobles. `scripts/smoke_live.py` verifica casos con ambos servicios; consume la credencial y guarda evidencia saneada. Los informes históricos no acreditan automáticamente cambios posteriores.
 
-`scripts/check_install.py` crea una copia temporal y otro entorno virtual, instala requisitos, ejecuta `pip check`, pytest y un chequeo HTTP sin proveedores. El workflow lo repite en Windows y Ubuntu 24.04 con Python 3.12, permisos de lectura y sin secretos ni despliegue. Windows está verificado; Ubuntu sigue pendiente.
+`scripts/check_install.py` crea una copia temporal y otro entorno virtual, instala requisitos, ejecuta `pip check`, pytest y un chequeo HTTP sin proveedores. El workflow lo repite en Windows y Ubuntu 24.04 con Python 3.12, permisos de lectura y sin secretos ni despliegue. Windows está verificado localmente y Ubuntu en GitHub Actions, con las 122 pruebas aprobadas; el README enlaza la evidencia del runner Linux.
 
 La publicación fue autorizada por el candidato el 17 de octubre de 2026 en [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator), con visibilidad pública y tag de entrega `v0.1.0`. La identidad Git se configura solo para este repositorio. El envío del enlace al evaluador es una acción separada y no se realiza automáticamente.

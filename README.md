@@ -2,7 +2,7 @@
 
 API en Python/FastAPI para responder preguntas, generar quizzes y preparar actividades utilizando exclusivamente una sección del Context Service de Didacteca. La versión local **0.1.0** implementa las tres capacidades, formato matemático LaTeX y extracción de controles con citas obligatorias unidas a sus valores.
 
-Pasan **122 pruebas automatizadas**. La instalación desde copia limpia está comprobada en Windows/Python 3.12.14; hay instrucciones y CI para Ubuntu 24.04. La evidencia con servicios reales y sus límites se detalla abajo. Repositorio público: [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator). Versión de entrega: `v0.1.0`.
+Pasan **122 pruebas automatizadas**. La instalación desde copia limpia está comprobada en Windows/Python 3.12.14 y en Ubuntu 24.04/Python 3.12.15 mediante GitHub Actions. La evidencia con servicios reales y sus límites se detalla abajo. Repositorio público: [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator). Versión de entrega: `v0.1.0`.
 
 ## Instalación
 
@@ -40,7 +40,7 @@ El script copia código, pruebas, requisitos, `pytest.ini` y `.env.example` a un
 
 Resultado comprobado en Windows/Python 3.12.14: instalación correcta, dependencias sin incompatibilidades, **122 pruebas aprobadas en 3,09 s** y contrato HTTP aprobado. [Informe de instalación](output/install-check-windows.json).
 
-[El workflow de pruebas](.github/workflows/tests.yml) ejecuta lo mismo en Windows y Ubuntu 24.04 con Python 3.12 en push, pull request o ejecución manual; no necesita secretos ni despliega. Se confirmó además mediante resolución cruzada de pip que los 35 paquetes tienen ruedas compatibles con CPython 3.12/Linux x86-64. Esto no equivale a ejecutar Linux: este equipo no tiene WSL instalado ni Docker disponible. Las acciones utilizadas están documentadas en [checkout](https://github.com/actions/checkout) y [setup-python](https://github.com/actions/setup-python).
+[El workflow de pruebas](.github/workflows/tests.yml) ejecuta lo mismo en Windows y Ubuntu 24.04 con Python 3.12 en push, pull request o ejecución manual; no necesita secretos ni despliega. La [comprobación real en Ubuntu](https://github.com/IsaiFR/Didacteca-Generator/actions/runs/39063231559/job/117485376389) aprobó la instalación limpia, `pip check`, **122 pruebas en 1,63 s** y el contrato HTTP con Python 3.12.15, sobre el código del tag `v0.1.0`. El equipo local no tiene Linux: la ejecución se hizo en el runner de GitHub, no se deduce de una resolución cruzada de paquetes. Las acciones utilizadas están documentadas en [checkout](https://github.com/actions/checkout) y [setup-python](https://github.com/actions/setup-python).
 
 ## Configuración y arranque
 
