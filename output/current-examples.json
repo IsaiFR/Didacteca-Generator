@@ -1,0 +1,35 @@
+{
+  "chat_discriminante_sin_publico": {
+    "action": "chat",
+    "answer": "El discriminante en una ecuación cuadrática de la forma \\(ax^{2} + bx + c = 0\\) es la expresión \\(\\Delta = b^{2} - 4ac\\). Este valor es fundamental para determinar la naturaleza de las soluciones de la ecuación. Si \\(\\Delta > 0\\), la ecuación tiene dos soluciones reales distintas; si \\(\\Delta = 0\\), hay una solución real doble (es decir, dos soluciones iguales); y si \\(\\Delta < 0\\), no existen soluciones reales. Por ejemplo, para la ecuación \\(x^{2} + 1 = 0\\), el discriminante es \\(-4\\) y por lo tanto no tiene soluciones reales."
+  },
+  "quiz_dos_preguntas_intermedias": {
+    "action": "quiz",
+    "title": "Cuestionario sobre el Discriminante en Ecuaciones Cuadráticas",
+    "instructions": "Responde las siguientes preguntas aplicando los conceptos y métodos para analizar el discriminante en ecuaciones cuadráticas. Cada pregunta requiere aplicar la fórmula del discriminante y analizar el número y tipo de soluciones de la ecuación dada.",
+    "questions": [
+      {
+        "question": "Dada la ecuación cuadrática \\( 3x^2 - 6x + 2 = 0 \\), calcula el discriminante y determina cuántas soluciones reales tiene la ecuación.",
+        "options": [
+          "\\( \\Delta = 12, \\) dos soluciones reales distintas",
+          "\\( \\Delta = 0, \\) una solución real doble",
+          "\\( \\Delta = -12, \\) no tiene soluciones reales",
+          "\\( \\Delta = 6, \\) dos soluciones reales distintas"
+        ],
+        "correct_answer": "\\( \\Delta = 12, \\) dos soluciones reales distintas",
+        "explanation": "Calculamos el discriminante \\( \\Delta = b^2 - 4ac = (-6)^2 - 4 \\times 3 \\times 2 = 36 - 24 = 12 > 0 \\), lo que indica que la ecuación tiene dos soluciones reales distintas."
+      },
+      {
+        "question": "Si una ecuación cuadrática tiene coeficientes \\( a = 1 \\), \\( b = 4 \\), y \\( c = 4 \\), ¿qué tipo de soluciones reales tiene la ecuación \\( x^2 + 4x + 4 = 0 \\) basándose en el discriminante?",
+        "options": [
+          "Dos soluciones reales distintas",
+          "Una solución real doble",
+          "No tiene soluciones reales",
+          "Una solución compleja"
+        ],
+        "correct_answer": "Una solución real doble",
+        "explanation": "El discriminante es \\( \\Delta = b^2 - 4ac = 4^2 - 4 \\times 1 \\times 4 = 16 - 16 = 0 \\). Cuando \\( \\Delta = 0 \\), hay una solución real doble."
+      }
+    ]
+  }
+}

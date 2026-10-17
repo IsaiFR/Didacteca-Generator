@@ -1,0 +1,80 @@
+{
+  "cases": [
+    {
+      "name": "chat_discriminante_sin_publico",
+      "status": 200,
+      "code": null,
+      "duration_ms": 4292.01,
+      "checks": {
+        "http_200": true,
+        "public_schema_exact": true,
+        "latex_delimiters_and_braces_valid": true,
+        "latex_expression_present": true
+      },
+      "passed": true
+    },
+    {
+      "name": "quiz_dos_preguntas_intermedias",
+      "status": 200,
+      "code": null,
+      "duration_ms": 5479.84,
+      "checks": {
+        "http_200": true,
+        "public_schema_exact": true,
+        "latex_delimiters_and_braces_valid": true,
+        "latex_expression_present": true,
+        "question_count_is_2": true
+      },
+      "passed": true
+    },
+    {
+      "name": "actividad_evaluativa_equipo_de_tres",
+      "status": 502,
+      "code": "MODEL_OUTPUT_INVALID",
+      "duration_ms": 20385.13,
+      "checks": {
+        "http_200": false
+      },
+      "passed": false
+    },
+    {
+      "name": "solicitud_sin_book_id",
+      "status": 422,
+      "code": "MISSING_INPUT_FIELDS",
+      "duration_ms": 1.42,
+      "checks": {
+        "http_422": true,
+        "expected_error_code": true,
+        "model_call_counter_available": true,
+        "no_model_calls": true,
+        "error_schema_exact": true
+      },
+      "passed": true
+    },
+    {
+      "name": "pregunta_biografia_ausente_en_seccion",
+      "status": 422,
+      "code": "CONTENT_INSUFFICIENT",
+      "duration_ms": 4043.49,
+      "checks": {
+        "http_422": true,
+        "expected_error_code": true,
+        "error_schema_exact": true
+      },
+      "passed": true
+    },
+    {
+      "name": "solicitud_intenta_cambiar_reglas",
+      "status": 422,
+      "code": "REQUEST_RULE_CONFLICT",
+      "duration_ms": 1589.54,
+      "checks": {
+        "http_422": true,
+        "expected_error_code": true,
+        "error_schema_exact": true
+      },
+      "passed": true
+    }
+  ],
+  "passed": false
+}

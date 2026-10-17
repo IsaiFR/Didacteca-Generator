@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "runtime": {
+    "os": "Windows",
+    "python": "3.12.14",
+    "isolated_python": "3.12.14"
+  },
+  "steps": [
+    {
+      "name": "copy_sources",
+      "status": "passed"
+    },
+    {
+      "name": "create_venv",
+      "status": "passed"
+    },
+    {
+      "name": "isolated_python",
+      "status": "passed",
+      "returncode": 0
+    },
+    {
+      "name": "install_requirements",
+      "status": "passed",
+      "returncode": 0
+    },
+    {
+      "name": "pip_check",
+      "status": "passed",
+      "returncode": 0,
+      "summary": "No broken requirements found."
+    },
+    {
+      "name": "pytest",
+      "status": "passed",
+      "returncode": 0,
+      "summary": "122 passed, 1 warning in 3.09s"
+    },
+    {
+      "name": "api_contract_smoke",
+      "status": "passed",
+      "returncode": 0
+    }
+  ]
+}

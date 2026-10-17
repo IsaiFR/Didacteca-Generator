@@ -1,0 +1,122 @@
+{
+  "cases": [
+    {
+      "name": "actividad_evaluativa_equipo_de_tres",
+      "status": 200,
+      "code": null,
+      "duration_ms": 17731.3,
+      "checks": {
+        "http_200": true,
+        "public_schema_exact": true,
+        "latex_delimiters_and_braces_valid": true,
+        "latex_expression_present": true,
+        "duration_is_20_minutes": true,
+        "rubric_text_contains_table": true,
+        "rubric_maxima_sum_to_10": true,
+        "rubric_scores_left_unassigned": true
+      },
+      "passed": true,
+      "diagnostics": {
+        "invalid_model_outputs": [
+          {
+            "stage": "generation",
+            "message": "La salida contiene notación matemática delimitada inválida.",
+            "issues": [
+              "result.instructions[1]: Expresión LaTeX evidente fuera de delimitadores matemáticos; envuelve la expresión completa con \\(...\\) o \\[...\\]."
+            ]
+          }
+        ],
+        "extraction": {
+          "controls": {
+            "task": "actividad evaluativa en equipos de 3 integrantes, de 20 minutos, sobre el discriminante",
+            "audience": "estudiantes de segundo año de bachillerato",
+            "question_count": null,
+            "difficulty": null,
+            "activity_type": "evaluativa",
+            "modality": "team",
+            "duration_minutes": 20,
+            "team_size": 3
+          },
+          "evidence": [
+            {
+              "field": "task",
+              "quote": "actividad evaluativa en equipos de 3 integrantes, de 20 minutos, sobre el discriminante"
+            },
+            {
+              "field": "audience",
+              "quote": "estudiantes de segundo año de bachillerato"
+            },
+            {
+              "field": "activity_type",
+              "quote": "actividad evaluativa"
+            },
+            {
+              "field": "modality",
+              "quote": "en equipos"
+            },
+            {
+              "field": "duration_minutes",
+              "quote": "de 20 minutos"
+            },
+            {
+              "field": "team_size",
+              "quote": "equipos de 3 integrantes"
+            }
+          ]
+        },
+        "generation_attempts": [
+          {
+            "action": "activity",
+            "source_passage_count": 2,
+            "citations": [
+              {
+                "location": "evidence[1]",
+                "target": "objective",
+                "source_id": 1,
+                "source_id_valid": true
+              },
+              {
+                "location": "evidence[2]",
+                "target": "instructions",
+                "source_id": 1,
+                "source_id_valid": true
+              },
+              {
+                "location": "evidence[3]",
+                "target": "instructions",
+                "source_id": 2,
+                "source_id_valid": true
+              }
+            ]
+          },
+          {
+            "action": "activity",
+            "source_passage_count": 2,
+            "citations": [
+              {
+                "location": "evidence[1]",
+                "target": "objective",
+                "source_id": 1,
+                "source_id_valid": true
+              },
+              {
+                "location": "evidence[2]",
+                "target": "instructions",
+                "source_id": 1,
+                "source_id_valid": true
+              },
+              {
+                "location": "evidence[3]",
+                "target": "instructions",
+                "source_id": 2,
+                "source_id_valid": true
+              }
+            ]
+          }
+        ],
+        "model_calls": 3
+      }
+    }
+  ],
+  "passed": true
+}
