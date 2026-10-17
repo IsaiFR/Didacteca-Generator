@@ -1,8 +1,8 @@
 # Didacteca Generator
 
-API en Python/FastAPI para responder preguntas, generar quizzes y preparar actividades utilizando exclusivamente una sección del Context Service de Didacteca. La versión local **0.1.0** implementa las tres capacidades, formato matemático LaTeX y extracción de controles con citas obligatorias unidas a sus valores.
+API en Python/FastAPI para responder preguntas, generar quizzes y preparar actividades utilizando exclusivamente una sección del Context Service de Didacteca. La versión **0.1.1** conserva las tres capacidades, LaTeX y extracción con citas obligatorias, y añade controles defensivos de entrada, recursos y proveedores.
 
-Pasan **122 pruebas automatizadas**. La instalación desde copia limpia está comprobada en Windows/Python 3.12.14 y en Ubuntu 24.04/Python 3.12.15 mediante GitHub Actions. La evidencia con servicios reales y sus límites se detalla abajo. Repositorio público: [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator). Versión de entrega: `v0.1.0`.
+Pasan **210 pruebas automatizadas**. La instalación limpia de 0.1.1 está comprobada en Windows/Python 3.12.14; el workflow comprueba cada publicación en Windows y Ubuntu 24.04. La evidencia con servicios reales y sus límites se detalla abajo. Repositorio público: [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator). Versión reforzada: `v0.1.1`; la entrega inicial `v0.1.0` se conserva.
 
 ## Instalación
 
@@ -38,7 +38,7 @@ python scripts/check_install.py
 
 El script copia código, pruebas, requisitos, `pytest.ini` y `.env.example` a una carpeta temporal propia. No copia `.env` ni reutiliza `.venv`. Crea otro entorno, instala dependencias, ejecuta `pip check`, pytest y un chequeo de OpenAPI/rechazo de solicitud incompleta con un servicio de prueba. Requiere acceso al índice de paquetes, pero no llama a Context Service ni OpenAI. Limpia su carpeta temporal y guarda `output/install-check-<sistema>.json`; `--report` permite otra ruta.
 
-Resultado comprobado en Windows/Python 3.12.14: instalación correcta, dependencias sin incompatibilidades, **122 pruebas aprobadas en 3,09 s** y contrato HTTP aprobado. [Informe de instalación](output/install-check-windows.json).
+Resultado comprobado en Windows/Python 3.12.14 para 0.1.1: instalación correcta, dependencias sin incompatibilidades, **210 pruebas aprobadas en 3,95 s** y contrato HTTP aprobado. [Informe de instalación](output/install-check-windows.json).
 
 [El workflow de pruebas](.github/workflows/tests.yml) ejecuta lo mismo en Windows y Ubuntu 24.04 con Python 3.12 en push, pull request o ejecución manual; no necesita secretos ni despliega. La [comprobación real en Ubuntu](https://github.com/IsaiFR/Didacteca-Generator/actions/runs/39063231559/job/117485376389) aprobó la instalación limpia, `pip check`, **122 pruebas en 1,63 s** y el contrato HTTP con Python 3.12.15, sobre el código del tag `v0.1.0`. El equipo local no tiene Linux: la ejecución se hizo en el runner de GitHub, no se deduce de una resolución cruzada de paquetes. Las acciones utilizadas están documentadas en [checkout](https://github.com/actions/checkout) y [setup-python](https://github.com/actions/setup-python).
 
@@ -64,6 +64,13 @@ Resultado comprobado en Windows/Python 3.12.14: instalación correcta, dependenc
 | `GENERATION_MAX_OUTPUT_TOKENS` | 8000 |
 | `MAX_REPAIRS_PER_EXECUTION` | 1, tope global. |
 | `MAX_MODEL_CALLS_PER_EXECUTION` | 3, tope global. |
+| `MAX_CONTEXT_RESPONSE_BYTES` | 524288, antes de cargar el JSON externo. |
+| `MAX_REQUEST_BODY_BYTES` | 65536, bytes reales del cuerpo HTTP. |
+| `REQUEST_BODY_TIMEOUT_SECONDS` | 10, tiempo para recibir el cuerpo completo. |
+| `MAX_CONCURRENT_EXECUTIONS` | 4 solicitudes simultáneas por proceso. |
+| `RATE_LIMIT_REQUESTS` | 30 solicitudes por cliente en la ventana. |
+| `RATE_LIMIT_WINDOW_SECONDS` | 60 |
+| `RATE_LIMIT_MAX_CLIENTS` | 1024 entradas máximas; se puede reducir. |
 
 Son límites operativos elegidos para esta prueba. No son equivalencias pedagógicas ni límites oficiales del modelo. Superarlos produce un resultado explícito, sin reducir cantidades o cambiar la petición silenciosamente.
 
@@ -72,7 +79,7 @@ La prueba original indica Context Service por HTTP. En la comprobación esa dire
 Después de configurar la credencial:
 
 ```text
-python -m uvicorn didacteca_ai.main:app --app-dir src --host 127.0.0.1 --port 8000
+python -m uvicorn didacteca_ai.main:app --app-dir src --host 127.0.0.1 --port 8000 --no-proxy-headers
 ```
 
 Probar en [Swagger local](http://127.0.0.1:8000/docs). No se requiere frontend. Se puede añadir `--reload` para desarrollo.
@@ -180,8 +187,10 @@ Los nombres de controles en `details` indican datos dentro de `instructions`, no
 
 | HTTP | Uso |
 | --- | --- |
+| 400 / 408 / 413 / 415 | JSON inválido/ambiguo, recepción lenta, cuerpo excesivo o tipo de contenido no admitido. |
 | 422 | Entrada inválida, aclaración, conflicto de reglas, contenido vacío/insuficiente/excesivo o rechazo del modelo; distinguir por código. |
 | 404 | `BOOK_NOT_FOUND`, `SECTION_NOT_FOUND`. |
+| 429 | Límite temporal por cliente; incluye `Retry-After`. |
 | 502 | Respuesta externa incompatible o salida del modelo inválida tras la recuperación disponible. |
 | 503 | Proveedor no disponible, acceso/modelo no habilitado, cuota o frecuencia limitada. |
 | 504 | Timeout de contexto, IA o ejecución total. |
@@ -225,13 +234,52 @@ Pruebas de contratos, aclaraciones, fallos y recuperación con dobles; comprobac
 
 ## Pruebas y evidencia
 
+### Seguridad y alcance de las verificaciones
+
+La versión reforzada conserva los cuatro campos y los éxitos del contrato. Añade controles antes de consumir proveedores:
+
+| Superficie | Defensa implementada |
+| --- | --- |
+| Identificadores manipulados, rutas o URL | Solo letras ASCII, números, `_` y `-`, sin normalización ni sustitución, con límite de longitud. |
+| Prompt injection directa | Rechazo local de algunas órdenes explícitas para anular reglas, suplantar roles, revelar secretos o ejecutar comandos. Inspección Unicode sobre una copia; conserva la petición y sus citas originales. |
+| Contenido del libro no confiable | Se mantiene como referencia en mensajes separados, sin herramientas, acceso a archivos ni claves dentro del prompt. La evidencia interna no cambia el esquema público. |
+| Cuerpo excesivo o ambiguo | Límite de bytes reales, incluso sin Content-Length; JSON obligatorio, sintaxis válida y claves únicas. |
+| Subidas lentas y saturación | Timeout de recepción, máximo de solicitudes simultáneas y límite temporal por cliente con memoria acotada. |
+| Respuesta externa excesiva | Lectura por stream con límite de bytes, timeout y cierre; se rechaza compresión inesperada antes de leerla. |
+| Interpretación por el navegador | Respuestas JSON con `nosniff` y `no-store`. Un frontend futuro debe escapar HTML y sanear Markdown; el JSON no habilita HTML confiable. |
+| Dependencias | Auditoría con `pip-audit` en CI; versiones fijadas y corrección de la vulnerabilidad conocida de pytest mediante 9.0.3. |
+
+**SQL injection:** esta aplicación no tiene base de datos, consultas SQL ni ejecución de código del usuario. Los identificadores válidos se envían como datos JSON, nunca como SQL, rutas o comandos. No se bloquean palabras SQL dentro de preguntas educativas. Si posteriormente se añade una base de datos, deberá utilizar consultas parametrizadas; no confiar en listas de palabras prohibidas. Esto no evalúa la seguridad interna del Context Service. [OWASP: SQL injection](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html).
+
+El filtro de prompt injection es conservador y parcial: admite ejemplos citados para analizarlos y no detecta todas las reformulaciones, codificaciones ni ataques indirectos. Sus pruebas con dobles verifican rechazo y flujo, no inmunidad semántica del modelo real. Se mantiene la defensa por capas, las salidas estrictas y el presupuesto de llamadas. [OWASP: prompt injection](https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html).
+
+Los límites HTTP son **por proceso**. La ventana por cliente es fija y se identifica mediante la IP del transporte ASGI; clientes detrás de NAT pueden compartirla. Un despliegue con varios workers o instancias necesita controles compartidos. El comando de arranque usa `--no-proxy-headers` para impedir que cabeceras reenviadas alteren esa identidad; habilitarlas exige definir proxies confiables. No añadir confianza global en `X-Forwarded-For`. La app permanece ligada a loopback y no incorpora autenticación: para exponerla a Internet se requieren controles de acceso, TLS y límites en un proxy apropiado.
+
+Errores nuevos: `INVALID_JSON` y `DUPLICATE_JSON_KEYS` (400), `REQUEST_BODY_TIMEOUT` (408), `REQUEST_BODY_TOO_LARGE` (413), `UNSUPPORTED_MEDIA_TYPE` (415), `REQUEST_RATE_LIMITED` (429), `EXECUTION_CAPACITY_REACHED` y `CLIENT_CAPACITY_REACHED` (503). Los rechazos temporales incluyen `Retry-After` y conservan `ErrorResponse`; ocurren antes de OpenAI. [OWASP: seguridad REST](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html).
+
+Las pruebas adversariales se ejecutan localmente con proveedores de prueba. Incluyen inyección, suplantación, SQL/rutas en identificadores, fuentes envenenadas como datos, cuerpos fragmentados, JSON ambiguo, saturación, desconexiones y cancelación. No se atacaron Didacteca ni OpenAI, no se consumió la API para esta ampliación y no equivale a un pentest profesional ni a una certificación de seguridad.
+
+La auditoría inicial encontró CVE-2025-71176 en pytest 8.4.2; se actualizó a 9.0.3. La auditoría posterior, con `pip-audit` 2.10.1 y los 35 paquetes fijados, no encontró vulnerabilidades conocidas: [informe](output/dependency-audit.json). Es una comprobación de avisos conocidos en la fecha de ejecución, no una garantía sobre vulnerabilidades desconocidas. [Aviso de pytest](https://github.com/advisories/GHSA-6w46-j5rx-g56g).
+
+Para repetir la auditoría en un entorno de herramientas separado, instalar `pip-audit==2.10.1` y ejecutar:
+
+```text
+python -m pip_audit -r requirements.txt --no-deps --disable-pip
+```
+
+El archivo de requisitos fija también las dependencias transitivas. `--no-deps` evita resolver e instalar el proyecto durante el análisis; no demuestra integridad criptográfica de los paquetes. La auditoría necesita consultar el servicio de avisos y no modifica las credenciales de la app.
+
+### Pruebas automatizadas
+
 ```text
 python -m pytest -q
 ```
 
-La suite actual aprobó **122 pruebas en 2,58 s**, con Python 3.12.14. Cubre contratos, tres capacidades, seis tipos de actividad, aclaraciones, límites, proveedores, reparación acotada, concurrencia, referencias, rúbrica y LaTeX. Las regresiones de extracción comprueban valor/cita obligatorios, ausencia como `null`, tipos estrictos, normalización, rechazo de citas inventadas y compatibilidad del esquema con el SDK.
+La suite de 0.1.1 aprobó **210 pruebas en 3,10 s**, con Python 3.12.14 y pytest 9.0.3: 88 casos adicionales respecto de la entrega inicial. Cubre contratos, tres capacidades, seis tipos de actividad, aclaraciones, límites, proveedores, reparación acotada, concurrencia, referencias, rúbrica, LaTeX y controles de seguridad. Las regresiones de extracción comprueban valor/cita obligatorios, ausencia como `null`, tipos estrictos, normalización, rechazo de citas inventadas y compatibilidad del esquema con el SDK. Las nuevas pruebas incluyen prefijos/montajes ASGI y rechazo de compresión antes de leer el contexto.
 
-La instalación limpia repitió las 122 pruebas en 3,09 s. Se conserva una advertencia conocida de Starlette/TestClient sobre `httpx`; no produjo fallos. En el entorno aislado de desarrollo se requirió permitir el bucle local de TestClient; pytest no usa proveedores reales.
+La instalación limpia repitió las 210 pruebas en 3,95 s. Se conserva una advertencia conocida de Starlette/TestClient sobre `httpx`; no produjo fallos. En el entorno aislado de desarrollo se requirió permitir el bucle local de TestClient; pytest no usa proveedores reales.
+
+Con Uvicorn 0.1.1 en el puerto local también se comprobaron cinco rechazos por HTTP: tipo no JSON (415), claves repetidas (400), SQL en identificador (422), orden directa de prompt injection (422) y cuerpo excesivo (413), todos con cabeceras defensivas. [Informe HTTP local](output/security-http-check.json). Una consulta normal a Context Service recuperó los 835 caracteres de la sección de prueba con el nuevo cliente sin compresión. No se llamó a OpenAI para esta ampliación; las muestras educativas siguientes corresponden a 0.1.0, no acreditan una nueva evaluación semántica del modelo bajo 0.1.1.
 
 La comprobación siguiente es **opcional y consume la credencial temporal**. Se ejecuta separadamente de pytest, con ambos clientes reales y sin imprimir claves:
 
@@ -255,6 +303,6 @@ La comprobación posterior de la actividad aprobó: 200 en 17,73 s, equipos de t
 
 Los documentos finales son este README, [contexto y límites](CONTEXTO_LIMITES_Y_OBJETIVOS.md), [diseño técnico](PLAN_TECNICO.md) e [instrucciones de agentes](AGENTS.md). El PDF original y el punto de retorno temporal se retiraron después de consolidar sus requisitos y decisiones. Los informes actuales y ejemplos útiles permanecen en `output/`; los artefactos reemplazados se retiraron.
 
-Esfuerzo aproximado de la implementación inicial y LaTeX: **una hora y media**, sin contar la pausa por tokens. Planeación, preparación de instalación/CI y corrección final de extracción no se cronometraron. La cifra es una estimación de sesión, no un registro de horas; las cuatro horas del ejercicio son orientativas.
+Esfuerzo aproximado de la implementación inicial y LaTeX: **una hora y media**, sin contar la pausa por tokens. Planeación, instalación/CI, corrección final de extracción y ampliación de seguridad no se cronometraron. La cifra es una estimación de sesión, no un registro de horas; las cuatro horas del ejercicio son orientativas.
 
-Repositorio público: [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator). La entrega evaluable está identificada mediante el tag [v0.1.0](https://github.com/IsaiFR/Didacteca-Generator/tree/v0.1.0). Para reproducirla, clonar el repositorio, seleccionar ese tag y seguir la instalación de este documento. `.env` y el entorno virtual no forman parte de la entrega; cada instalación debe configurar su credencial localmente.
+Repositorio público: [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator). La versión reforzada se identifica mediante [v0.1.1](https://github.com/IsaiFR/Didacteca-Generator/tree/v0.1.1); la entrega inicial [v0.1.0](https://github.com/IsaiFR/Didacteca-Generator/tree/v0.1.0) conserva su historial. Para reproducir una versión, clonar y seleccionar su tag. Los resultados por commit y la auditoría están en [GitHub Actions](https://github.com/IsaiFR/Didacteca-Generator/actions). `.env` y el entorno virtual no forman parte de la entrega; cada instalación configura su credencial localmente.

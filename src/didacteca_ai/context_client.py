@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Any
 
 import httpx
 from pydantic import ValidationError
 
 from .config import Settings
-from .errors import DomainError, ErrorCode
-from .schemas import BookSection
+from .errors import DomainError, ErrorCode, ErrorDetails
+from .schemas import BookSection, require_identifier
 
 
 class ContextClient:
@@ -36,13 +37,48 @@ class ContextClient:
     async def get_section(self, book_id: str, section_id: str) -> BookSection:
         """Obtiene y valida los identificadores, el contenido y su tamaño."""
 
+        for name, value in (("book_id", book_id), ("section_id", section_id)):
+            try:
+                require_identifier(value)
+                if len(value) > self._settings.max_identifier_chars:
+                    raise ValueError("Identificador demasiado largo.")
+            except (TypeError, ValueError) as exc:
+                raise DomainError(
+                    ErrorCode.INVALID_REQUEST,
+                    "La solicitud contiene un identificador inválido.",
+                    details=ErrorDetails(
+                        missing_fields=[], conflicting_fields=[], invalid_fields=[name],
+                        constraints=["Usa identificadores ASCII con letras, números, _ o - dentro del límite configurado."],
+                    ),
+                ) from exc
+
         try:
             async with asyncio.timeout(self._settings.context_timeout_seconds):
-                response = await self._http_client.post(
+                async with self._http_client.stream(
+                    "POST",
                     f"{self._base_url}/context",
                     json={"book_id": book_id, "section_id": section_id},
+                    headers={"Accept-Encoding": "identity"},
                     timeout=self._settings.context_timeout_seconds,
-                )
+                ) as response:
+                    if response.headers.get("content-encoding", "identity").strip().casefold() != "identity":
+                        raise DomainError(
+                            ErrorCode.CONTEXT_INVALID_RESPONSE,
+                            "El servicio de contexto devolvió una codificación de contenido no admitida.",
+                        )
+                    # No se admite compresión: así el límite se comprueba antes
+                    # de que un decoder expanda un chunk arbitrariamente grande.
+                    # Cuenta bytes antes de cargar JSON, también
+                    # para cuerpos de error. El context manager cierra el stream
+                    # cuando se supera el límite o vence el timeout total.
+                    body = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        if len(body) + len(chunk) > self._settings.max_context_response_bytes:
+                            raise DomainError(
+                                ErrorCode.CONTEXT_TOO_LARGE,
+                                "La respuesta del servicio de contexto supera el límite configurado.",
+                            )
+                        body.extend(chunk)
         except httpx.TimeoutException as exc:
             raise DomainError(
                 ErrorCode.CONTEXT_TIMEOUT,
@@ -60,7 +96,7 @@ class ContextClient:
             ) from exc
 
         if response.status_code == 404:
-            self._raise_not_found(response)
+            self._raise_not_found(body)
         if response.status_code == 422:
             raise DomainError(
                 ErrorCode.CONTEXT_REQUEST_REJECTED,
@@ -83,8 +119,8 @@ class ContextClient:
             )
 
         try:
-            payload: Any = response.json()
-        except (ValueError, UnicodeError) as exc:
+            payload: Any = json.loads(body)
+        except (ValueError, UnicodeError, RecursionError) as exc:
             raise DomainError(
                 ErrorCode.CONTEXT_INVALID_RESPONSE,
                 "El servicio de contexto no devolvió JSON válido.",
@@ -116,12 +152,12 @@ class ContextClient:
         return section
 
     @staticmethod
-    def _raise_not_found(response: httpx.Response) -> None:
+    def _raise_not_found(body: bytes | bytearray) -> None:
         """Usa el código estructurado del proveedor, nunca su mensaje libre."""
 
         try:
-            payload = response.json()
-        except (ValueError, UnicodeError):
+            payload = json.loads(body)
+        except (ValueError, UnicodeError, RecursionError):
             payload = None
 
         code: object = None

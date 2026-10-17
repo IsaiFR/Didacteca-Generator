@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from didacteca_ai.config import Settings
 from didacteca_ai.errors import DomainError, ErrorCode, InvalidModelOutput
+from didacteca_ai.injection_guard import validate_request_rules
 from didacteca_ai.schemas import ExecuteRequest, ParsedInstructions, PublicSuccess
 from didacteca_ai.validation import (
     validate_generation,
@@ -120,6 +121,7 @@ class ExecutionService:
                         action=request.action,
                     )
                 validate_request_limits(request, self.settings)
+                validate_request_rules(request.instructions, request.action)
 
                 controls: ParsedInstructions = await call_with_repair(
                     "extraction",

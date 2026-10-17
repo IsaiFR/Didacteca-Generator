@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     max_team_size: int = Field(default=8, ge=2)
     max_activity_minutes: int = Field(default=120, ge=1)
     max_context_chars: int = Field(default=60000, ge=1)
+    max_context_response_bytes: int = Field(default=524288, ge=1)
+
+    max_request_body_bytes: int = Field(default=65536, ge=1)
+    request_body_timeout_seconds: float = Field(default=10, gt=0)
+    max_concurrent_executions: int = Field(default=4, ge=1)
+    rate_limit_requests: int = Field(default=30, ge=1)
+    rate_limit_window_seconds: float = Field(default=60, gt=0)
+    rate_limit_max_clients: int = Field(default=1024, ge=1, le=1024)
 
     context_timeout_seconds: float = Field(default=10, gt=0)
     ai_timeout_seconds: float = Field(default=30, gt=0)

@@ -1,0 +1,38 @@
+{
+  "target": "http://127.0.0.1:8000",
+  "checked_at_utc": "2026-10-17T19:52:44.6457748Z",
+  "cases": [
+    {
+      "name": "tipo_no_json",
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE",
+      "passed": true
+    },
+    {
+      "name": "claves_duplicadas",
+      "status": 400,
+      "code": "DUPLICATE_JSON_KEYS",
+      "passed": true
+    },
+    {
+      "name": "sql_en_identificador",
+      "status": 422,
+      "code": "INVALID_REQUEST",
+      "passed": true
+    },
+    {
+      "name": "prompt_injection_directa",
+      "status": 422,
+      "code": "REQUEST_RULE_CONFLICT",
+      "passed": true
+    },
+    {
+      "name": "cuerpo_excesivo",
+      "status": 413,
+      "code": "REQUEST_BODY_TOO_LARGE",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "version": "0.1.1"
+}

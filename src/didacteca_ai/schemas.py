@@ -71,12 +71,23 @@ NonEmptyText = Annotated[
 ]
 
 
+def require_identifier(value: str) -> str:
+    """Acepta IDs opacos ASCII sin interpretarlos ni normalizarlos."""
+
+    if re.fullmatch(r"[A-Za-z0-9_-]+", value) is None:
+        raise ValueError("El identificador solo admite letras ASCII, números, _ y -.")
+    return value
+
+
+Identifier = Annotated[StrictStr, AfterValidator(require_identifier)]
+
+
 class ExecuteRequest(StrictContractModel):
     """Entrada pública: acepta exclusivamente los cuatro campos del contrato."""
 
     action: Action
-    book_id: StrictStr
-    section_id: StrictStr
+    book_id: Identifier
+    section_id: Identifier
     instructions: StrictStr
 
     @field_validator("book_id", "section_id", "instructions")

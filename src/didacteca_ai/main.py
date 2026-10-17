@@ -11,6 +11,7 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette._utils import get_route_path
 
 from didacteca_ai.config import Settings, get_settings
 from didacteca_ai.context_client import ContextClient
@@ -21,6 +22,7 @@ from didacteca_ai.errors import (
     ErrorResponse,
 )
 from didacteca_ai.llm_client import LLMClient
+from didacteca_ai.http_security import EXECUTE_HEADERS, ExecuteSecurityMiddleware
 from didacteca_ai.schemas import ExecuteRequest, PublicSuccess
 from didacteca_ai.service import ExecutionService
 
@@ -176,7 +178,7 @@ def create_app(
     app = FastAPI(
         title="Didacteca AI Engineer Jr",
         description="Genera chat, quizzes y actividades basados en una sección exacta del Context Service.",
-        version="0.1.0",
+        version="0.1.1",
         lifespan=lifespan,
     )
 
@@ -197,6 +199,7 @@ def create_app(
         return JSONResponse(
             status_code=domain_error.http_status,
             content=domain_error.to_payload(),
+            headers=EXECUTE_HEADERS if get_route_path(request.scope) == "/execute" else None,
         )
 
     @app.exception_handler(DomainError)
@@ -222,18 +225,24 @@ def create_app(
         return JSONResponse(
             status_code=domain_error.http_status,
             content=domain_error.to_payload(),
+            headers=EXECUTE_HEADERS if get_route_path(request.scope) == "/execute" else None,
         )
 
     @app.post(
         "/execute",
         response_model=PublicSuccess,
         responses={
+            400: {"model": ErrorResponse, "description": "JSON inválido o claves repetidas."},
+            408: {"model": ErrorResponse, "description": "Tiempo de recepción del cuerpo agotado."},
+            413: {"model": ErrorResponse, "description": "Cuerpo demasiado grande."},
+            415: {"model": ErrorResponse, "description": "Se requiere application/json."},
+            429: {"model": ErrorResponse, "description": "Límite temporal por cliente."},
             404: {"model": ErrorResponse, "description": "Libro o sección inexistentes."},
             422: {"model": ErrorResponse, "description": "Solicitud inválida o aclaración requerida."},
             500: {"model": ErrorResponse, "description": "Error interno."},
             501: {"model": ErrorResponse, "description": "Capacidad no implementada."},
             502: {"model": ErrorResponse, "description": "Respuesta externa inválida."},
-            503: {"model": ErrorResponse, "description": "Dependencia no disponible."},
+            503: {"model": ErrorResponse, "description": "Dependencia o capacidad no disponible."},
             504: {"model": ErrorResponse, "description": "Tiempo de espera agotado."},
         },
     )
@@ -243,6 +252,7 @@ def create_app(
         request.state.execution_started = True
         return await execution_service.execute(body)
 
+    app.add_middleware(ExecuteSecurityMiddleware, settings=settings or get_settings())
     return app
 
 

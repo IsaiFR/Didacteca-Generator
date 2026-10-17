@@ -1,6 +1,6 @@
 # Diseño técnico de Didacteca Generator
 
-Este documento describe la versión local 0.1.0. Los requisitos están en [CONTEXTO_LIMITES_Y_OBJETIVOS.md](CONTEXTO_LIMITES_Y_OBJETIVOS.md); los comandos y resultados comprobados, en [README.md](README.md).
+Este documento describe la versión 0.1.1, incluido el refuerzo de seguridad. Los requisitos están en [CONTEXTO_LIMITES_Y_OBJETIVOS.md](CONTEXTO_LIMITES_Y_OBJETIVOS.md); los comandos y resultados comprobados, en [README.md](README.md).
 
 ## Componentes y flujo
 
@@ -22,10 +22,12 @@ Los módulos de `src/didacteca_ai/` tienen estas responsabilidades:
 | `math_format.py` | Comprobaciones limitadas de delimitadores y llaves LaTeX. |
 | `rubric.py` | Validación y tabla Markdown de rúbricas. |
 | `errors.py` | Códigos, detalles y mapeo HTTP. |
+| `http_security.py` | Admisión HTTP, bytes, recepción, JSON no ambiguo, frecuencia y concurrencia por proceso. |
+| `injection_guard.py` | Rechazo parcial de órdenes explícitas sobre una copia normalizada de la solicitud. |
 
 Recorrido:
 
-1. Validar los cuatro campos públicos y sus límites; rechazar propiedades adicionales.
+1. Aplicar admisión HTTP y límites de cuerpo/tiempo/JSON; validar los cuatro campos públicos, caracteres de identificadores y límites. Rechazar propiedades adicionales y órdenes explícitas incompatibles antes de OpenAI.
 2. Extraer tarea y controles con el modelo, sin enviar el libro. Cada dato presente contiene valor y cita literal: `{"value": 2, "quote": "2 preguntas"}`. Un control ausente es `null`; `task` siempre tiene valor y cita.
 3. Normalizar al modelo plano `ParsedInstructions` y sus enlaces de evidencia. Comprobar citas como subcadenas exactas, rangos, faltantes y problemas. Una aclaración detiene el flujo antes de consultar contexto.
 4. Consultar la sección exacta. Validar identificadores, estructura, contenido vacío y tamaño; no truncar.
@@ -52,11 +54,16 @@ La respuesta contiene `status` (`needs_clarification` o `error`), `action` recon
 
 | HTTP | Códigos principales |
 | --- | --- |
+| 400 | `INVALID_JSON`, `DUPLICATE_JSON_KEYS`. |
+| 408 | `REQUEST_BODY_TIMEOUT`. |
+| 413 | `REQUEST_BODY_TOO_LARGE`. |
+| 415 | `UNSUPPORTED_MEDIA_TYPE`. |
+| 429 | `REQUEST_RATE_LIMITED`. |
 | 422 | `INVALID_REQUEST`, `UNSUPPORTED_ACTION`, `REQUEST_RULE_CONFLICT`, `CONTENT_EMPTY`, `CONTENT_INSUFFICIENT`, `CONTEXT_TOO_LARGE`, `AI_REFUSAL`. |
 | 422, aclaración | `MISSING_INPUT_FIELDS`, `MISSING_PARAMETERS`, `AMBIGUOUS_INSTRUCTIONS`, `CONFLICTING_INSTRUCTIONS`, `INVALID_PARAMETERS`, `UNFEASIBLE_ACTIVITY`. |
 | 404 | `BOOK_NOT_FOUND`, `SECTION_NOT_FOUND`. |
 | 502 | `CONTEXT_INVALID_RESPONSE`, `CONTEXT_REQUEST_REJECTED`, `MODEL_OUTPUT_INVALID`, `AI_INVALID_RESPONSE`. |
-| 503 | `CONTEXT_UNAVAILABLE`, `AI_UNAVAILABLE`, `AI_ACCESS_DENIED`, `AI_QUOTA_EXCEEDED`, `AI_RATE_LIMITED`, `AI_MODEL_UNAVAILABLE`. |
+| 503 | `CONTEXT_UNAVAILABLE`, `AI_UNAVAILABLE`, `AI_ACCESS_DENIED`, `AI_QUOTA_EXCEEDED`, `AI_RATE_LIMITED`, `AI_MODEL_UNAVAILABLE`, `EXECUTION_CAPACITY_REACHED`, `CLIENT_CAPACITY_REACHED`. |
 | 504 | `CONTEXT_TIMEOUT`, `AI_TIMEOUT`, `EXECUTION_TIMEOUT`. |
 | 500 | `INTERNAL_ERROR`. |
 
@@ -72,6 +79,10 @@ La evaluativa tiene criterios internos con máximos positivos que suman 10 y niv
 
 ## Configuración, pruebas y entrega
 
+El refuerzo de seguridad limita cuerpos reales antes de Pydantic, rechaza JSON duplicado y acota admisión y lectura. Las cuotas son por proceso y no se basan en cabeceras del usuario. `--no-proxy-headers` conserva la IP del transporte; otros despliegues deben definir su frontera de confianza. El contexto se solicita sin compresión y se limita antes de cargar JSON para evitar buffers y descompresión sin cota.
+
+No hay SQL ni shell en el flujo de usuario. Los datos educativos no se ejecutan; las palabras SQL pueden ser contenido legítimo. La detección por patrones de prompt injection es parcial y no sustituye separación de mensajes, ausencia de herramientas/secretos, validación de salidas y evaluación del modelo. El README detalla controles, nuevos errores, auditoría y límites de las pruebas locales.
+
 `.env.example` enumera las variables. Context usa HTTPS configurable y OpenAI su base oficial fija. Los archivos `.env` y `.env.example` quedan con `OPENAI_API_KEY` vacía por solicitud del candidato; ejecutar contra proveedores requiere configurarla nuevamente o proporcionarla como variable de entorno.
 
 Límites iniciales: instrucciones 6.000 caracteres, identificadores 128, preguntas 1–10, equipos 2–8, duración 1–120 minutos y contexto 60.000 caracteres. Timeout de contexto 10 s, IA 30 s por llamada y ejecución total 110 s; salida de extracción 2.000 tokens y generación 8.000. El README contiene los nombres definitivos.
@@ -80,6 +91,6 @@ Los registros operativos contienen identificador, acción, código, duración, l
 
 `tests/` comprueba contratos, aclaraciones, proveedores, reparación, concurrencia, referencias, rúbrica y matemáticas con dobles. `scripts/smoke_live.py` verifica casos con ambos servicios; consume la credencial y guarda evidencia saneada. Los informes históricos no acreditan automáticamente cambios posteriores.
 
-`scripts/check_install.py` crea una copia temporal y otro entorno virtual, instala requisitos, ejecuta `pip check`, pytest y un chequeo HTTP sin proveedores. El workflow lo repite en Windows y Ubuntu 24.04 con Python 3.12, permisos de lectura y sin secretos ni despliegue. Windows está verificado localmente y Ubuntu en GitHub Actions, con las 122 pruebas aprobadas; el README enlaza la evidencia del runner Linux.
+`scripts/check_install.py` crea una copia temporal y otro entorno virtual, instala requisitos, ejecuta `pip check`, pytest y un chequeo HTTP sin proveedores. La versión 0.1.1 aprobó 210 pruebas desde copia limpia en Windows. El workflow lo repite en Windows y Ubuntu 24.04 con Python 3.12, permisos de lectura y sin secretos ni despliegue; añade un trabajo independiente de auditoría de los 35 paquetes fijados. El README y Actions identifican la evidencia exacta por versión.
 
 La publicación fue autorizada por el candidato el 17 de octubre de 2026 en [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator), con visibilidad pública y tag de entrega `v0.1.0`. La identidad Git se configura solo para este repositorio. El envío del enlace al evaluador es una acción separada y no se realiza automáticamente.

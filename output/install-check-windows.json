@@ -34,7 +34,7 @@
       "name": "pytest",
       "status": "passed",
       "returncode": 0,
-      "summary": "122 passed, 1 warning in 3.09s"
+      "summary": "210 passed, 1 warning in 3.95s"
     },
     {
       "name": "api_contract_smoke",

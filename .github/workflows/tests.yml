@@ -31,3 +31,23 @@ jobs:
 
       - name: Verify clean installation, tests, and API contract
         run: python scripts/check_install.py
+
+  dependency-audit:
+    name: Audit pinned dependencies
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install audit tool
+        run: python -m pip install pip-audit==2.10.1
+
+      - name: Audit all pinned packages
+        run: python -m pip_audit -r requirements.txt --no-deps --disable-pip

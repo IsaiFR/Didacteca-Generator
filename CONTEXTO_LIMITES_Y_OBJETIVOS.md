@@ -75,10 +75,12 @@ Las expresiones matemáticas generadas usan LaTeX con `\(...\)` o `\[...\]` dent
 
 ## Alcance y pendientes
 
+Se incorporó un refuerzo defensivo de la API: identificadores ASCII acotados; rechazo local parcial de órdenes incompatibles; límites HTTP de bytes, recepción, frecuencia y concurrencia; JSON sin claves duplicadas; respuesta de contexto acotada y sin descompresión ilimitada; auditoría de dependencias. Se conserva el contrato público y no se añade autenticación ni base de datos. Las pruebas son locales, con proveedores de prueba: no constituyen pentest profesional, evaluación ofensiva de terceros ni garantía de inmunidad a prompt injection. La aplicación no ejecuta SQL; una futura persistencia requeriría consultas parametrizadas.
+
 No se incluyen frontend, autenticación, persistencia, despliegue, RAG propio, embeddings, bases vectoriales ni frameworks de agentes. Los libros de nivel similar quedaron fuera para respetar la fuente única. Swagger permite probar la API, pero no renderiza fórmulas.
 
-La instalación limpia está comprobada en Windows/Python 3.12.14 y Ubuntu 24.04/Python 3.12.15. Ubuntu ejecutó las 122 pruebas, comprobación de dependencias y contrato HTTP mediante GitHub Actions; la evidencia está enlazada en el README. La muestra educativa es pequeña, sin calibración con estudiantes ni garantía general frente a inyecciones.
+La instalación limpia de 0.1.1 aprobó 210 pruebas en Windows/Python 3.12.14. La entrega 0.1.0 también se verificó en Ubuntu 24.04/Python 3.12.15 con 122 pruebas; el workflow comprueba cada publicación posterior en Windows y Ubuntu. El README y Actions enlazan los resultados por versión. La muestra educativa es pequeña, sin calibración con estudiantes ni garantía general frente a inyecciones.
 
 La ampliación coloquial sigue pendiente: en los ejemplos acordados, «normales» corresponde a intermedia y «tranquilas» a fácil; «formales» requiere aclarar dificultad. No se atribuye a la versión actual una evaluación de esas frases.
 
-La publicación pública fue autorizada por el candidato el 17 de octubre de 2026. El destino es [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator) y la versión evaluable se identifica con el tag `v0.1.0`. Publicar no implica autorización para contactar al evaluador o enviarle el enlace.
+La publicación pública fue autorizada por el candidato el 17 de octubre de 2026. El destino es [IsaiFR/Didacteca-Generator](https://github.com/IsaiFR/Didacteca-Generator); `v0.1.0` identifica la entrega inicial y `v0.1.1` incorpora el refuerzo de seguridad solicitado después. Publicar no implica autorización para contactar al evaluador o enviarle el enlace.
